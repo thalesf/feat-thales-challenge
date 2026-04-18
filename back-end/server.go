@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -28,13 +29,17 @@ func NewServer(reviewsData *ReviewsData) *Server {
 }
 
 func (s *Server) handleAutocomplete(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	query := r.URL.Query().Get("q")
 
 	limit := defaultAutocompleteLimit
 	if raw := r.URL.Query().Get("limit"); raw != "" {
 		n, err := strconv.Atoi(raw)
 		if err != nil || n <= 0 {
-			http.Error(w, `{"error":"limit must be a positive integer"}`, http.StatusBadRequest)
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(`{"error":"limit must be a positive integer"}`))
 			return
 		}
 		limit = n
@@ -45,19 +50,33 @@ func (s *Server) handleAutocomplete(w http.ResponseWriter, r *http.Request) {
 		results = []College{}
 	}
 
-	json.NewEncoder(w).Encode(results)
+	if err := json.NewEncoder(w).Encode(results); err != nil {
+		log.Printf("autocomplete: encode response: %v", err)
+	}
 }
 
-// handleGetReviews handles the reviews endpoint
 func (s *Server) handleGetReviews(w http.ResponseWriter, r *http.Request) {
-	// Set response headers
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	// TODO: Implement the reviews endpoint
-	// This should retrieve reviews for a specific college
-	// and return them in the response
+	url := r.URL.Query().Get("url")
+	if url == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":"missing url query param"}`))
+		return
+	}
 
-	// Write a simple 200 OK with empty JSON response for now
-	w.Write([]byte("{}"))
+	reviews, college, ok := s.ReviewsData.ReviewsForURL(url)
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"error":"college not found"}`))
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"college": college,
+		"reviews": reviews,
+	}); err != nil {
+		log.Printf("reviews: encode response: %v", err)
+	}
 }

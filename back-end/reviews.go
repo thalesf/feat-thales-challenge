@@ -116,3 +116,20 @@ func (d *ReviewsData) Autocomplete(query string, limit int) []College {
 	}
 	return results
 }
+
+func (d *ReviewsData) ReviewsForURL(url string) (reviews []string, college College, ok bool) {
+	url = collapseDashes(strings.TrimSpace(url))
+	reviews, ok = d.Reviews[url]
+	if !ok {
+		return
+	}
+
+	for _, c := range d.Colleges {
+		if c.URL == url {
+			college = c
+			return
+		}
+	}
+	college = College{URL: url}
+	return
+}
