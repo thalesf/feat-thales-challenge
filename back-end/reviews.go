@@ -70,7 +70,7 @@ func loadReviewsFile(path string) (data *ReviewsData, err error) {
 		}
 
 		name := strings.TrimSpace(row[1])
-		url := strings.TrimSpace(row[2])
+		url := collapseDashes(strings.TrimSpace(row[2]))
 		if name == "" || url == "" {
 			log.Printf("reviews: skipping row with missing college name or url (uuid=%q)", row[0])
 			continue
@@ -88,4 +88,11 @@ func loadReviewsFile(path string) (data *ReviewsData, err error) {
 	})
 
 	return data, nil
+}
+
+func collapseDashes(s string) string {
+	for strings.Contains(s, "--") {
+		s = strings.ReplaceAll(s, "--", "-")
+	}
+	return s
 }

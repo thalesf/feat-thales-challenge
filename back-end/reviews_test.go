@@ -128,6 +128,19 @@ func TestLoadReviewsFile(t *testing.T) {
 			wantErr: "read header",
 		},
 		{
+			name: "urls with repeated dashes are normalized and deduped",
+			input: validHeader +
+				`u1,Academy of Art University,academy-of-art-university,"first"` + "\n" +
+				`u2,Academy of Art University,academy----of-art-university,"second"` + "\n" +
+				`u3,Academy of Art University,academy--of-art-university,"third"` + "\n",
+			want: &ReviewsData{
+				Colleges: []College{{Name: "Academy of Art University", URL: "academy-of-art-university"}},
+				Reviews: map[string][]string{
+					"academy-of-art-university": {"first", "second", "third"},
+				},
+			},
+		},
+		{
 			name: "colleges sorted case-insensitive",
 			input: validHeader +
 				`u1,zeta,zeta,"r"` + "\n" +
