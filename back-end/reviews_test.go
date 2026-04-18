@@ -81,9 +81,46 @@ func TestLoadReviewsFile(t *testing.T) {
 			wantErr: "read row",
 		},
 		{
-			name:    "empty url",
-			input:   validHeader + "u1,Alpha,,\"text\"\n",
-			wantErr: "missing college",
+			name: "rows with missing name or url are skipped",
+			input: validHeader +
+				`u1,Alpha,alpha,"keep"` + "\n" +
+				`u2,NoURL,,"drop"` + "\n" +
+				`u3,,no-name,"drop"` + "\n",
+			want: &ReviewsData{
+				Colleges: []College{{Name: "Alpha", URL: "alpha"}},
+				Reviews:  map[string][]string{"alpha": {"keep"}},
+			},
+		},
+		{
+			name: "row with both name and url empty is skipped",
+			input: validHeader +
+				`u1,Alpha,alpha,"keep"` + "\n" +
+				`u2,,,"drop"` + "\n",
+			want: &ReviewsData{
+				Colleges: []College{{Name: "Alpha", URL: "alpha"}},
+				Reviews:  map[string][]string{"alpha": {"keep"}},
+			},
+		},
+		{
+			name: "rows with whitespace-only name or url are skipped",
+			input: validHeader +
+				`u1,Alpha,alpha,"keep"` + "\n" +
+				`u2,"   ",beta,"drop"` + "\n" +
+				`u3,Gamma,"   ","drop"` + "\n",
+			want: &ReviewsData{
+				Colleges: []College{{Name: "Alpha", URL: "alpha"}},
+				Reviews:  map[string][]string{"alpha": {"keep"}},
+			},
+		},
+		{
+			name: "skipped row does not pollute reviews or colleges of subsequent valid row",
+			input: validHeader +
+				`u1,,,"drop"` + "\n" +
+				`u2,Alpha,alpha,"keep"` + "\n",
+			want: &ReviewsData{
+				Colleges: []College{{Name: "Alpha", URL: "alpha"}},
+				Reviews:  map[string][]string{"alpha": {"keep"}},
+			},
 		},
 		{
 			name:    "empty file",

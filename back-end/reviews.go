@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"sort"
 	"strings"
@@ -71,7 +72,8 @@ func loadReviewsFile(path string) (data *ReviewsData, err error) {
 		name := strings.TrimSpace(row[1])
 		url := strings.TrimSpace(row[2])
 		if name == "" || url == "" {
-			return nil, fmt.Errorf("missing college name or url")
+			log.Printf("reviews: skipping row with missing college name or url (uuid=%q)", row[0])
+			continue
 		}
 
 		data.Reviews[url] = append(data.Reviews[url], row[3])
