@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -10,6 +12,11 @@ import (
 	"strings"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	log.SetOutput(io.Discard)
+	os.Exit(m.Run())
+}
 
 const validHeader = "COLLEGE_UUID,COLLEGE_NAME,COLLEGE_URL,REVIEW_TEXT\n"
 
