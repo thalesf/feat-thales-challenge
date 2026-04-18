@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -196,5 +199,139 @@ func TestLoadReviewsFile_FileMissing(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "nope.csv")
 	if _, err := loadReviewsFile(missing); err == nil {
 		t.Fatal("want error, got nil")
+	}
+}
+
+func TestServer_HandleAutocomplete(t *testing.T) {
+	t.Parallel()
+
+	data := &ReviewsData{Colleges: []College{
+		{Name: "Alpha University", URL: "alpha"},
+		{Name: "alpha State", URL: "alpha-state"},
+		{Name: "Beta College", URL: "beta"},
+		{Name: "Boston Tech", URL: "boston"},
+		{Name: "Zeta Institute", URL: "zeta"},
+	}}
+	srv := NewServer(data)
+
+	tests := []struct {
+		name       string
+		target     string
+		wantStatus int
+		wantBody   []College
+		wantErrSub string
+	}{
+		{
+			name:       "matches returned as json array",
+			target:     "/autocomplete?q=alp",
+			wantStatus: http.StatusOK,
+			wantBody: []College{
+				{Name: "Alpha University", URL: "alpha"},
+				{Name: "alpha State", URL: "alpha-state"},
+			},
+		},
+		{
+			name:       "case-insensitive match",
+			target:     "/autocomplete?q=ALP",
+			wantStatus: http.StatusOK,
+			wantBody: []College{
+				{Name: "Alpha University", URL: "alpha"},
+				{Name: "alpha State", URL: "alpha-state"},
+			},
+		},
+		{
+			name:       "empty q returns empty array not null",
+			target:     "/autocomplete?q=",
+			wantStatus: http.StatusOK,
+			wantBody:   []College{},
+		},
+		{
+			name:       "missing q param returns empty array",
+			target:     "/autocomplete",
+			wantStatus: http.StatusOK,
+			wantBody:   []College{},
+		},
+		{
+			name:       "no match returns empty array",
+			target:     "/autocomplete?q=xyz",
+			wantStatus: http.StatusOK,
+			wantBody:   []College{},
+		},
+		{
+			name:       "limit caps results",
+			target:     "/autocomplete?q=a&limit=1",
+			wantStatus: http.StatusOK,
+			wantBody: []College{
+				{Name: "Alpha University", URL: "alpha"},
+			},
+		},
+		{
+			name:       "limit larger than matches returns all",
+			target:     "/autocomplete?q=a&limit=99",
+			wantStatus: http.StatusOK,
+			wantBody: []College{
+				{Name: "Alpha University", URL: "alpha"},
+				{Name: "alpha State", URL: "alpha-state"},
+			},
+		},
+		{
+			name:       "empty limit value falls back to default",
+			target:     "/autocomplete?q=a&limit=",
+			wantStatus: http.StatusOK,
+			wantBody: []College{
+				{Name: "Alpha University", URL: "alpha"},
+				{Name: "alpha State", URL: "alpha-state"},
+			},
+		},
+		{
+			name:       "non-numeric limit is rejected",
+			target:     "/autocomplete?q=a&limit=abc",
+			wantStatus: http.StatusBadRequest,
+			wantErrSub: "limit must be a positive integer",
+		},
+		{
+			name:       "zero limit is rejected",
+			target:     "/autocomplete?q=a&limit=0",
+			wantStatus: http.StatusBadRequest,
+			wantErrSub: "limit must be a positive integer",
+		},
+		{
+			name:       "negative limit is rejected",
+			target:     "/autocomplete?q=a&limit=-5",
+			wantStatus: http.StatusBadRequest,
+			wantErrSub: "limit must be a positive integer",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequest(http.MethodGet, tc.target, nil)
+			rr := httptest.NewRecorder()
+			srv.Router.ServeHTTP(rr, req)
+
+			if rr.Code != tc.wantStatus {
+				t.Fatalf("status = %d, want %d; body = %q", rr.Code, tc.wantStatus, rr.Body.String())
+			}
+
+			if tc.wantStatus != http.StatusOK {
+				if !strings.Contains(rr.Body.String(), tc.wantErrSub) {
+					t.Errorf("body = %q, want substring %q", rr.Body.String(), tc.wantErrSub)
+				}
+				return
+			}
+
+			var got []College
+			if err := json.NewDecoder(rr.Body).Decode(&got); err != nil {
+				t.Fatalf("decode body: %v; body = %q", err, rr.Body.String())
+			}
+			if got == nil {
+				got = []College{}
+			}
+			if !reflect.DeepEqual(got, tc.wantBody) {
+				t.Errorf("body mismatch\n got:  %+v\n want: %+v", got, tc.wantBody)
+			}
+		})
 	}
 }

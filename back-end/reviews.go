@@ -96,3 +96,23 @@ func collapseDashes(s string) string {
 	}
 	return s
 }
+
+func (d *ReviewsData) Autocomplete(query string, limit int) []College {
+	query = strings.ToLower(strings.TrimSpace(query))
+
+	if query == "" {
+		return nil
+	}
+
+	var results []College
+
+	for _, c := range d.Colleges {
+		if strings.HasPrefix(strings.ToLower(c.Name), query) {
+			results = append(results, c)
+			if len(results) >= limit {
+				break
+			}
+		}
+	}
+	return results
+}

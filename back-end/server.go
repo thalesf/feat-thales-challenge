@@ -1,8 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
+	"strconv"
 )
+
+const defaultAutocompleteLimit = 20
 
 // Server represents the HTTP server for our application
 type Server struct {
@@ -17,25 +21,31 @@ func NewServer(reviewsData *ReviewsData) *Server {
 		ReviewsData: reviewsData,
 	}
 
-	// Register routes
-	server.Router.HandleFunc("/autocomplete", server.handleAutocomplete)
-	server.Router.HandleFunc("/reviews", server.handleGetReviews)
+	server.Router.HandleFunc("GET /autocomplete", server.handleAutocomplete)
+	server.Router.HandleFunc("GET /reviews", server.handleGetReviews)
 
 	return server
 }
 
-// handleAutocomplete handles the autocomplete endpoint
 func (s *Server) handleAutocomplete(w http.ResponseWriter, r *http.Request) {
-	// Set response headers
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	query := r.URL.Query().Get("q")
 
-	// TODO: Implement the autocomplete functionality
-	// This should search through the colleges in ReviewsData
-	// and return matches based on the query string
+	limit := defaultAutocompleteLimit
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n <= 0 {
+			http.Error(w, `{"error":"limit must be a positive integer"}`, http.StatusBadRequest)
+			return
+		}
+		limit = n
+	}
 
-	// Write a simple 200 OK with empty JSON response for now
-	w.Write([]byte("{}"))
+	results := s.ReviewsData.Autocomplete(query, limit)
+	if results == nil {
+		results = []College{}
+	}
+
+	json.NewEncoder(w).Encode(results)
 }
 
 // handleGetReviews handles the reviews endpoint
