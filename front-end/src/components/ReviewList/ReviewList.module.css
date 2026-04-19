@@ -1,0 +1,67 @@
+.reviewList {
+  margin-top: var(--space-8);
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: var(--color-brand);
+  margin: 0;
+}
+
+.emptyState {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  white-space: nowrap;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  color: var(--color-text);
+  line-height: 1.625;
+  white-space: pre-wrap;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.item::before {
+  content: "\201C";
+  display: block;
+  color: var(--color-brand);
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  line-height: 0.3;
+  margin-bottom: var(--space-1);
+  pointer-events: none;
+}
