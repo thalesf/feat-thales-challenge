@@ -1,5 +1,64 @@
-* {
+:root {
+  --color-bg: #ffffff;
+  --color-bg-secondary: #fbf5f2;
+
+  --color-brand: #004436;
+  --color-surface-hover: color-mix(in srgb, var(--color-bg-secondary) 92%, #000 8%);
+
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+
+  --font-sans: var(--font-sans-next), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-serif-next), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-mono-next), ui-monospace, SFMono-Regular, Menlo,
+    monospace;
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+}
+
+html,
+body {
   margin: 0;
   padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 1px solid var(--color-brand);
 }

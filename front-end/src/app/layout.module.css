@@ -1,0 +1,8 @@
+.main {
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding-inline: clamp(1rem, 2vw, 2rem);
+  padding-block: var(--space-6);
+}
